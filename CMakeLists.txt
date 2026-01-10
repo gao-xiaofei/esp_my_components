@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 set(COMPONENTS "main"
     "nvs_flash"
     "unity"
+    "doso_driver_gpio"
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

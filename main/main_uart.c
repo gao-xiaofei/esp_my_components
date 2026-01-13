@@ -35,17 +35,17 @@ static void uart_task(void *pvParameters)
 
     while (1)
     {
-       uart1_user_.read(&uart1_user, 160);
-       memcpy(uart_recv_buffer, uart1_user.rx_buffer, 160);
-       printf("uart_read%d:  ", uart1_user.receive_len);
+       uart1_user_.read(&uart1_user_, 160);
+       memcpy(uart_recv_buffer, uart1_user_.rx_buffer, 160);
+       printf("uart_read%d:  ", uart1_user_.receive_len);
        for(int i = 0; i < 3; i++) {
            printf("%02x ", uart_recv_buffer[i]);
        }
        printf("----------------------------\n");
 
        // uart 发送
-       memcpy(uart1_user.tx_buffer, uart_recv_buffer, 160);
-       uart1_user_.write(&uart1_user, 160);
+       memcpy(uart1_user_.tx_buffer, uart_recv_buffer, 160);
+       uart1_user_.write(&uart1_user_, 160);
     }
 
     vTaskDelete(NULL);

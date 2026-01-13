@@ -44,7 +44,7 @@ int8_t doso_uart_init(struct DosoUartUser * uart_user_)
     ESP_ERROR_CHECK(ret);
     ret = uart_param_config(uart_user_->uart_num, &uart_config);
     ESP_ERROR_CHECK(ret);
-    ret = uart_set_pin(uart_user_->uart_num, uart_user_->tx_pin, uart_user_->rx_pin, UART_RTS, UART_CTS);
+    ret = uart_set_pin(uart_user_->uart_num, uart_user_->tx_pin, uart_user_->rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     ESP_ERROR_CHECK(ret);
 
     return 0;

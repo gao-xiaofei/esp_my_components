@@ -6,6 +6,7 @@ set(COMPONENTS "main"
     "nvs_flash"
     "unity"
     "doso_driver_gpio"
+    "doso_driver_uart"
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

@@ -35,13 +35,20 @@ static void uart_task(void *pvParameters)
 
     while (1)
     {
-       uart1_user_.read(&uart1_user_, 160);
-       memcpy(uart_recv_buffer, uart1_user_.rx_buffer, 160);
-       printf("uart_read%d:  ", uart1_user_.receive_len);
-       for(int i = 0; i < 3; i++) {
-           printf("%02x ", uart_recv_buffer[i]);
+        memset( uart1_user_.rx_buffer, 0, 160);
+        
+        uart1_user_.read(&uart1_user_, 160);
+        recv_num = uart1_user_.receive_len;
+        if( recv_num <= 0) {
+            printf("uart timeout! read-len %d:  ", recv_num);
+            for(int i = 0; i < 3; i++) {
+                printf("%02x ", uart_recv_buffer[i]);
+            }
+            printf("----------------------------\n");
+           continue;
        }
-       printf("----------------------------\n");
+       memcpy(uart_recv_buffer, uart1_user_.rx_buffer, 160);
+
 
        // uart 发送
        memcpy(uart1_user_.tx_buffer, uart_recv_buffer, 160);

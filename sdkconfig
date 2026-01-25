@@ -580,6 +580,12 @@ CONFIG_ESP_ERR_TO_NAME_LOOKUP=y
 # end of ESP-Driver:GPIO Configurations
 
 #
+# ESP-Driver:UART Configurations
+#
+# CONFIG_UART_ISR_IN_IRAM is not set
+# end of ESP-Driver:UART Configurations
+
+#
 # Hardware Settings
 #
 
@@ -672,6 +678,12 @@ CONFIG_XTAL_FREQ=40
 CONFIG_PM_POWER_DOWN_CPU_IN_LIGHT_SLEEP=y
 CONFIG_PM_RESTORE_CACHE_TAGMEM_AFTER_LIGHT_SLEEP=y
 # end of Power Management
+
+#
+# ESP Ringbuf
+#
+# CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH is not set
+# end of ESP Ringbuf
 
 #
 # ESP System Settings

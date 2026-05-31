@@ -7,6 +7,8 @@ set(COMPONENTS "main"
     "unity"
     "doso_driver_gpio"
     "doso_driver_uart"
+    "doso_driver_spi_software_display"
+    "doso_device_epd"
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

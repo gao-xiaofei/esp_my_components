@@ -87,7 +87,36 @@ void display_epd_init(void)
 }
 
 
+void display_epd_init_gray4(void) 
+{		
+    DISPLAY_RST_0;  // Module reset   
+    delay_xms(10);  // At least 10ms delay 
+    DISPLAY_RST_1;
+    delay_xms(10);  // At least 10ms delay 
+  
+    spi_write_cmd(0X00);			// PANNEL SETTING
+    spi_write_data(0x1F);   // KW-3f   KWR-2F	BWROTP 0f	BWOTP 1f
 
+    spi_write_cmd(0X50);			// VCOM AND DATA INTERVAL SETTING
+    spi_write_data(0x10);
+    spi_write_data(0x07);
+
+    spi_write_cmd(0x04);  // POWER ON
+    delay_xms(100);  
+    lcd_chkstatus();        // waiting for the electronic paper IC to release the idle signal
+
+    // Enhanced display drive(Add 0x06 command)
+    spi_write_cmd(0x06);			// Booster Soft Start 
+    spi_write_data (0x27);
+    spi_write_data (0x27);   
+    spi_write_data (0x18);		
+    spi_write_data (0x17);		
+
+    spi_write_cmd(0xE0);
+    spi_write_data(0x02);
+    spi_write_cmd(0xE5);
+    spi_write_data(0x5F);  // 0x5A--1.5s, 0x5F--4 Gray		
+}	
 
 
 // Full screen update display function
@@ -107,7 +136,72 @@ void display_epd_write_image(const unsigned char *datas)
     EPD_Update();	 
 }
 
+void display_epd_write_image_gray4(const unsigned char *datas)
+{
+    unsigned int i, j, k;
+    unsigned char temp1, temp2, temp3;
 
+    // old data
+    spi_write_cmd(0x10);	       
+
+    for(i = 0; i < 48000; i++)	               // 48000*2  800*480
+    { 
+        temp3 = 0;
+        for(j = 0; j < 2; j++)	
+        {
+            temp1 = datas[i * 2 + j];
+            for(k = 0; k < 4; k++)
+            {
+                temp2 = temp1 & 0xC0 ;
+                if(temp2 == 0xC0)
+                    temp3 |= 0x01;  // white
+                else if(temp2 == 0x00)
+                    temp3 |= 0x00;  // black
+                else if((temp2 >= 0x80) && (temp2 < 0xC0)) 
+                    temp3 |= 0x00;  // gray1
+                else if(temp2 == 0x40)
+                    temp3 |= 0x01;  // gray2
+                if((j == 0 && k <= 3) || (j == 1 && k <= 2))
+                {
+                    temp3 <<= 1;	
+                    temp1 <<= 2;
+                }
+            }
+        }	
+        spi_write_data(~temp3);			
+    }
+
+    // new data
+    spi_write_cmd(0x13);	       
+    for(i = 0; i < 48000 * 2; i++)	               // 48000*2   800*480
+    { 
+        temp3 = 0;
+        for(j = 0; j < 2; j++)	
+        {
+            temp1 = datas[i * 2 + j];
+            for(k = 0; k < 4; k++)
+            {
+                temp2 = temp1 & 0xC0 ;
+                if(temp2 == 0xC0)
+                    temp3 |= 0x01;  // white
+                else if(temp2 == 0x00)
+                    temp3 |= 0x00;  // black
+                else if((temp2 >= 0x80) && (temp2 < 0xC0)) 
+                    temp3 |= 0x01;  // gray1
+                else if(temp2 == 0x40)
+                    temp3 |= 0x00;  // gray2
+                if((j == 0 && k <= 3) || (j == 1 && k <= 2))
+                {
+                    temp3 <<= 1;	
+                    temp1 <<= 2;
+                }
+            }	
+        }
+        spi_write_data(~temp3);			
+    }
+
+    EPD_Update();   
+}
 
 // Clear screen display
 void display_epd_write_white(void)

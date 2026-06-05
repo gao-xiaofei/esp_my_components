@@ -13,7 +13,9 @@
 
 // Full screen update display
 void display_epd_init(void); 
+void display_epd_init_gray4(void);
 void display_epd_write_image(const unsigned char *datas);
+void display_epd_write_image_gray4(const unsigned char *datas);
 void display_epd_write_white(void);
 void display_epd_write_black(void);
 void display_deep_sleep(void);

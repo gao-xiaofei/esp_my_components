@@ -13,6 +13,7 @@
 #include "doso_uart_user.h"
 #include "display_epd_uc8179.h"
 #include "image_test.h"
+#include "image_test_gray4.h"
 
 
 #define MAIN_TAG            "main"
@@ -45,8 +46,8 @@ struct DosoUartUser uart1_user_ = {
 };
 
 static uint8_t image_is_update = 0;
-static uint8_t image_data[EPD_ARRAY_SIZE] = {0};
-extern const unsigned char gImage_1[48000];
+static uint8_t display_mode = 0;
+static uint8_t image_data[EPD_ARRAY_SIZE*2] = {0};
 static void uart_task(void *pvParameters)
 {
     uint8_t uart_recv_buffer[256] = {0};
@@ -93,10 +94,7 @@ static void display_task(void *pvParameters)
 
     while (1)
     {
-        for(int i = 0;i<EPD_ARRAY_SIZE;i++)
-        {
-            image_data[i] = gImage_1[i];
-        }
+
         g_interrupt_old = g_interrupt_new;
         g_interrupt_new = g_interrupt;
         image_num_old = image_num;
@@ -113,22 +111,32 @@ static void display_task(void *pvParameters)
         switch (image_num)
         {
             case 1:
-                for(int i = 0;i<EPD_ARRAY_SIZE;i++)
+                for(int i = 0;i<EPD_ARRAY_SIZE*2;i++)
                 {
-                    image_data[i] = gImage_1[i];
+                    image_data[i] = gImage_gray4_1[i];
                 }
+                display_mode = 2;
                 break;
             case 2:
-                for(int i = 0;i<EPD_ARRAY_SIZE;i++)
+                for(int i = 0;i<EPD_ARRAY_SIZE*2;i++)
                 {
-                    image_data[i] = gImage_2[i];
+                    image_data[i] = gImage_gray4_2[i];
                 }
+                display_mode = 2;
                 break;
             case 3:
                 for(int i = 0;i<EPD_ARRAY_SIZE;i++)
                 {
+                    image_data[i] = gImage_2[i];
+                }
+                display_mode = 1;
+                break;
+            case 4:
+                for(int i = 0;i<EPD_ARRAY_SIZE;i++)
+                {
                     image_data[i] = gImage_3[i];
                 }
+                display_mode = 1;
                 break;
             default:
                 image_num = 0;
@@ -137,10 +145,17 @@ static void display_task(void *pvParameters)
         }
         if(image_is_update == 1) {
             image_is_update = 0;
-            // 全屏刷新方式初始化
-            display_epd_init();
-            // 全局图像刷新
-            display_epd_write_image(image_data); 
+            if(display_mode == 1){
+                // 全屏刷新方式初始化
+                display_epd_init();
+                // 全局图像刷新
+                display_epd_write_image(image_data); 
+            }else if(display_mode == 2){
+                // 全屏刷新方式初始化
+                display_epd_init_gray4();
+                // 全局图像刷新
+                display_epd_write_image_gray4(image_data); 
+            }
             // 开启低功耗模式
             display_deep_sleep();
         }

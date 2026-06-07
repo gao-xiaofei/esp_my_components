@@ -9,6 +9,7 @@ set(COMPONENTS "main"
     "doso_driver_uart"
     "doso_driver_spi_software_display"
     "doso_device_epd"
+    "doso_driver_wifi"
     )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

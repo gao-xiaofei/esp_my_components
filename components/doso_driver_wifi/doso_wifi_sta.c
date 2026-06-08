@@ -15,38 +15,34 @@
 // #include "lwip/err.h"
 // #include "lwip/sys.h"
 
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD   WIFI_AUTH_WPA2_PSK
-#define ESP_WIFI_SAE_MODE                   WPA3_SAE_PWE_BOTH
-#define EXAMPLE_H2E_IDENTIFIER              "doso_wifi"
-#define WIFI_RETRY_NUM_MAX                  5
-static int s_retry_num = 0;
+
+static struct DosoWifiUser s_wifi_user = {0};
 
 
-static void event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data)
+static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < WIFI_RETRY_NUM_MAX) {
-            esp_wifi_connect();
-            s_retry_num++;
-            printf("retry to connect to the AP\n");
-        } else {
-            printf("Failed to connect to SSID\n");
-        }
-        printf("connect to the AP fail\n");
+        s_wifi_user.is_connected = 0;
+        s_wifi_user.is_farst_init = 1;
+        s_wifi_user.is_get_ip = 0;
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        printf("got ip:" IPSTR "\n", IP2STR(&event->ip_info.ip));
-        s_retry_num = 0;
-        printf("connected to SSID\n");
+        s_wifi_user.ip_addr[0] = esp_ip4_addr_get_byte(&event->ip_info.ip, 0);
+        s_wifi_user.ip_addr[1] = esp_ip4_addr_get_byte(&event->ip_info.ip, 1);
+        s_wifi_user.ip_addr[2] = esp_ip4_addr_get_byte(&event->ip_info.ip, 2);
+        s_wifi_user.ip_addr[3] = esp_ip4_addr_get_byte(&event->ip_info.ip, 3);
+        printf("got ip:" IPSTR "\n", s_wifi_user.ip_addr[0],s_wifi_user.ip_addr[1],s_wifi_user.ip_addr[2],s_wifi_user.ip_addr[3]);
+        s_wifi_user.retry_num = 0;
+        s_wifi_user.is_get_ip = 1;
+        s_wifi_user.is_connected = 1;
+        s_wifi_user.is_farst_init = 0;
     }
 }
 
 
-
-void wifi_init_sta(uint8_t* _ssid,uint8_t* _password)
+void doso_wifi_init_sta(struct DosoWifiUser* _wifi_info)
 {
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -77,23 +73,44 @@ void wifi_init_sta(uint8_t* _ssid,uint8_t* _password)
              * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
              * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
              */
-            .threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD,
-            .sae_pwe_h2e = ESP_WIFI_SAE_MODE,
-            .sae_h2e_identifier = EXAMPLE_H2E_IDENTIFIER,
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+            .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+            .sae_h2e_identifier = "doso_wifi",
         },
     };
-    memcpy(wifi_config.sta.ssid,_ssid,strlen((char*)_ssid));
-    memcpy(wifi_config.sta.password,_password,strlen((char*)_password));
+    if(_wifi_info->is_open)
+    {
+        wifi_config.sta.threshold.authmode = WIFI_AUTH_OPEN;
+    }
+    memcpy(wifi_config.sta.ssid,_wifi_info->ssid,strlen((char*)_wifi_info->ssid));
+    memcpy(wifi_config.sta.password,_wifi_info->password,strlen((char*)_wifi_info->password));
+    
+    memcpy(s_wifi_user.ssid,_wifi_info->ssid,strlen((char*)_wifi_info->ssid));
+    memcpy(s_wifi_user.password,_wifi_info->password,strlen((char*)_wifi_info->password));
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
-    printf("wifi_init_sta finished.\n");
+}
 
+void doso_wifi_connect_retry(void)
+{
+    if(s_wifi_user.is_farst_init == 1)
+    {
+        esp_wifi_connect();
+        s_wifi_user.is_farst_init = 0;
+        s_wifi_user.retry_num++;
+    }
 }
 
 
-
+void doso_wifi_get_status(struct DosoWifiUser* _wifi_info)
+{
+    _wifi_info->is_connected = s_wifi_user.is_connected;
+    _wifi_info->retry_num = s_wifi_user.retry_num;
+    memcpy(_wifi_info->ip_addr,s_wifi_user.ip_addr,4);
+}
 
 
 
